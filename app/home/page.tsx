@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { Search, Flame, Tag } from 'lucide-react';
 
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-6 pb-20 pt-4 px-4 max-w-md mx-auto">
-      {/* Search Bar Header */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <div className="absolute left-3 top-3 text-muted-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
         <input 
           type="text" 
           placeholder="ค้นหาหนังสือ, เสื้อผ้า, อุปกรณ์..." 
@@ -14,17 +14,16 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Hero Banner */}
       <div className="rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 p-5 text-white shadow-lg">
         <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium">ส่งต่อของมือสอง</span>
         <h2 className="mt-2 text-xl font-bold">ตลาดนัดเด็กวิทยาลัย</h2>
         <p className="mt-1 text-xs opacity-90">ซื้อง่าย ขายคล่อง นัดรับได้ในรั้วสถาบัน</p>
       </div>
 
-      {/* Quick Categories */}
       <div>
         <h3 className="mb-3 text-base font-semibold flex items-center gap-1.5">
-          <Tag className="h-4 w-4 text-primary" /> หมวดหมู่ยอดนิยม
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+          หมวดหมู่ยอดนิยม
         </h3>
         <div className="grid grid-cols-4 gap-2 text-center text-xs">
           {['ตำราเรียน', 'ยูนิฟอร์ม', 'ไอที/อุปกรณ์', 'ของใช้หอ'].map((cat, i) => (
@@ -35,11 +34,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Trending Items */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold flex items-center gap-1.5">
-            <Flame className="h-4 w-4 text-orange-500" /> สินค้ามาใหม่
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            สินค้ามาใหม่
           </h3>
           <Link href="/product" className="text-xs text-primary font-medium">ดูทั้งหมด</Link>
         </div>
