@@ -11,7 +11,7 @@ interface Product {
   image: string;
 }
 
-// รายการสินค้าตั้งต้นพร้อมรูปสวยๆ
+// รายการสินค้าตั้งต้นพร้อมรูปที่แก้ไขแล้ว
 const DEFAULT_PRODUCTS: Product[] = [
   {
     id: 1,
@@ -25,7 +25,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     name: 'เสื้อช็อปเด็กวิศวะ ไซส์ L (สภาพดี)',
     price: 190,
     category: 'ยูนิฟอร์ม',
-    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&auto=format&fit=crop&q=80',
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     name: 'พัดลมตั้งโต๊ะ Minimal สีขาว',
     price: 220,
     category: 'ของใช้หอ',
-    image: 'https://images.unsplash.com/photo-1618941709602-92849f611096?w=500&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1565151443833-29bf2ba5dd8d?w=500&auto=format&fit=crop&q=80',
   },
 ];
 
