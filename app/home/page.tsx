@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface Product {
   id: number;
@@ -11,19 +10,24 @@ interface Product {
   image: string;
 }
 
+interface CartItem extends Product {
+  quantity: number;
+}
+
 export default function HomePage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-
   const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // State สำหรับ Form
+  // State สำหรับ Form ลงขาย
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('ตำราเรียน');
   const [image, setImage] = useState('');
 
+  // ระบบสลับ Dark Mode / Light Mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -32,7 +36,7 @@ export default function HomePage() {
     }
   }, [isDarkMode]);
 
-  // ฟังก์ชันแปลงไฟล์รูปภาพเป็น Base64
+  // ฟังก์ชันแปลงรูปภาพเป็น Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -44,6 +48,7 @@ export default function HomePage() {
     }
   };
 
+  // ฟังก์ชันเพิ่มสินค้าลงระบบ
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !price) return;
@@ -63,9 +68,43 @@ export default function HomePage() {
     setShowAddForm(false);
   };
 
+  // ฟังก์ชันลบสินค้าออกจากระบบ
   const handleDeleteProduct = (id: number) => {
     setProducts(products.filter((p) => p.id !== id));
+    setCart(cart.filter((item) => item.id !== id));
   };
+
+  // ฟังก์ชันเพิ่มสินค้าเข้าตะกร้า
+  const addToCart = (product: Product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+  };
+
+  // ฟังก์ชันปรับจำนวนในตะกร้า
+  const updateQuantity = (id: number, delta: number) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  // คำนวณราคารวม และจำนวนชิ้นรวม
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="min-h-screen bg-pink-50/50 dark:bg-slate-900 text-slate-800 dark:text-pink-50 transition-colors duration-200">
@@ -84,28 +123,37 @@ export default function HomePage() {
             />
           </div>
 
+          {/* ปุ่มสลับโหมดกลางวัน / กลางคืน */}
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm hover:bg-pink-100/50 dark:hover:bg-slate-700 transition-colors"
+            className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm hover:bg-pink-100/50 dark:hover:bg-slate-700 transition-colors"
+            title={isDarkMode ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
             {isDarkMode ? (
+              /* ไอคอนดวงอาทิตย์ (โหมดกลางคืนใช้งานอยู่) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
+              /* ไอคอนดวงจันทร์ (โหมดกลางวันใช้งานอยู่) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
 
-          <Link href="/cart" className="relative p-2 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm text-fuchsia-600 dark:text-fuchsia-400">
+          {/* ปุ่มเปิดตะกร้าสินค้า */}
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="relative p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm text-fuchsia-600 dark:text-fuchsia-400 hover:bg-pink-100/50 dark:hover:bg-slate-700 transition-colors"
+            title="เปิดตะกร้าสินค้า"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                {cartCount}
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                {totalItems}
               </span>
             )}
-          </Link>
+          </button>
         </div>
 
-        {/* Hero Banner ชมพูอมม่วง */}
+        {/* Hero Banner */}
         <div className="rounded-2xl bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 p-5 text-white shadow-md shadow-fuchsia-200 dark:shadow-none">
           <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-medium backdrop-blur-sm">🌸 ส่งต่อของมือสอง</span>
           <h2 className="mt-2 text-xl font-bold">ตลาดนัดเด็กวิทยาลัย</h2>
@@ -127,7 +175,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* โซนสินค้า */}
+        {/* สินค้าทั้งหมด */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center gap-1.5 text-fuchsia-900 dark:text-pink-200">
@@ -147,7 +195,6 @@ export default function HomePage() {
             <form onSubmit={handleAddProduct} className="mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-fuchsia-200 dark:border-fuchsia-900/50 shadow-md space-y-3">
               <h4 className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400">ลงขายสินค้าใหม่ ✨</h4>
               
-              {/* ช่องอัปโหลดรูปภาพ */}
               <div>
                 <label className="text-[10px] text-fuchsia-900/60 dark:text-pink-300/60 block mb-1">รูปภาพสินค้า</label>
                 <div className="flex items-center gap-2">
@@ -157,7 +204,6 @@ export default function HomePage() {
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 </div>
-                {/* พรีวิวรูปภาพ */}
                 {image && (
                   <div className="mt-2 relative w-full h-28 rounded-lg overflow-hidden border border-pink-200 dark:border-pink-900">
                     <img src={image} alt="Preview" className="w-full h-full object-cover" />
@@ -220,7 +266,7 @@ export default function HomePage() {
             </form>
           )}
 
-          {/* รายการสินค้าที่เพิ่มแล้ว */}
+          {/* รายการสินค้าที่ลงขาย */}
           <div className="grid grid-cols-2 gap-3">
             {!showAddForm && (
               <div 
@@ -252,7 +298,7 @@ export default function HomePage() {
 
                 <div className="p-2 pt-0 flex gap-1">
                   <button 
-                    onClick={() => setCartCount(cartCount + 1)} 
+                    onClick={() => addToCart(product)} 
                     className="flex-1 py-1.5 bg-pink-100/70 dark:bg-pink-950/50 text-fuchsia-700 dark:text-pink-300 rounded-lg text-[10px] font-semibold hover:bg-pink-200/70 transition-colors"
                   >
                     + ใส่ตะกร้า
@@ -293,6 +339,71 @@ export default function HomePage() {
         </div>
 
       </div>
+
+      {/* หน้าต่างตะกร้าสินค้า (Cart Drawer) */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-200">
+            <div>
+              {/* ตะกร้า Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-pink-100 dark:border-slate-800">
+                <h3 className="text-base font-bold text-fuchsia-900 dark:text-pink-100 flex items-center gap-2">
+                  🛒 ตะกร้าสินค้าของคุณ ({totalItems})
+                </h3>
+                <button 
+                  onClick={() => setIsCartOpen(false)}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* รายการสินค้าในตะกร้า */}
+              <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                {cart.length === 0 ? (
+                  <div className="text-center py-10 text-slate-400 text-xs">
+                    🛒 ตะกร้าของคุณยังว่างอยู่
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl bg-pink-50/50 dark:bg-slate-800 border border-pink-100 dark:border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                        <div>
+                          <p className="text-xs font-semibold truncate max-w-[120px]">{item.name}</p>
+                          <p className="text-xs text-fuchsia-600 dark:text-fuchsia-400 font-bold">฿{item.price}</p>
+                        </div>
+                      </div>
+
+                      {/* ปุ่มปรับจำนวน */}
+                      <div className="flex items-center gap-2 bg-white dark:bg-slate-700 px-2 py-1 rounded-lg border border-pink-200 dark:border-slate-600 text-xs">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1">-</button>
+                        <span className="font-semibold text-xs">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1">+</button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* สรุปราคาและปุ่มสั่งซื้อ */}
+            <div className="pt-4 border-t border-pink-100 dark:border-slate-800 space-y-3">
+              <div className="flex justify-between items-center text-sm font-bold">
+                <span>ราคารวมทั้งหมด:</span>
+                <span className="text-lg text-fuchsia-600 dark:text-fuchsia-400">฿{totalPrice}</span>
+              </div>
+              <button 
+                disabled={cart.length === 0}
+                className="w-full py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md disabled:opacity-50 transition-opacity"
+              >
+                ดำเนินการชำระเงิน
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
