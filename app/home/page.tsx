@@ -16,6 +16,8 @@ interface CartItem extends Product {
 
 export default function HomePage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -33,29 +35,39 @@ export default function HomePage() {
   const [category, setCategory] = useState('ตำราเรียน');
   const [image, setImage] = useState('');
 
-  // อ่านค่า Dark Mode เดิมจาก localStorage เมื่อโหลดหน้าเว็บครั้งแรก
+  // 1. อ่านค่าธีมจาก localStorage เมื่อ Client โหลดเสร็จ
   useEffect(() => {
+    setMounted(true);
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
+    } else if (savedTheme === 'light') {
       setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
+    } else {
+      // ถ้าไม่มีค่าบันทึกไว้ ให้เช็คตาม OS System Preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
     }
   }, []);
 
-  // ฟังก์ชันกดสลับโหมด กลางวัน / กลางคืน
-  const toggleDarkMode = () => {
+  // 2. อัปเดต HTML Class 'dark' และ localStorage ทุกครั้งที่ isDarkMode เปลี่ยน
+  useEffect(() => {
+    if (!mounted) return;
+    
     if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDarkMode(false);
-    } else {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
+  }, [isDarkMode, mounted]);
+
+  // ฟังก์ชันกดสลับโหมด กลางวัน / กลางคืน
+  const toggleDarkMode = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDarkMode((prev) => !prev);
   };
 
   // ฟังก์ชันแปลงรูปภาพเป็น Base64
@@ -156,7 +168,7 @@ export default function HomePage() {
       <div className="flex flex-col gap-5 pb-20 pt-4 px-4 max-w-md mx-auto">
         
         {/* Header Bar */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 relative z-20">
           <div className="relative flex-1">
             <div className="absolute left-3 top-3 text-fuchsia-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -170,23 +182,25 @@ export default function HomePage() {
 
           {/* 🔘 ปุ่มสลับโหมด กลางวัน / กลางคืน 🔘 */}
           <button 
+            type="button"
             onClick={toggleDarkMode}
-            className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-sm hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center"
+            className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-md hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center cursor-pointer select-none"
             title={isDarkMode ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
-            {isDarkMode ? (
-              /* ไอคอนดวงอาทิตย์ (สำหรับโหมดกลางคืน -> เพื่อกดสลับไปกลางวัน) */
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 animate-spin-slow"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            {mounted && isDarkMode ? (
+              /* ไอคอนดวงอาทิตย์ */
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 pointer-events-none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
-              /* ไอคอนดวงจันทร์ (สำหรับโหมดกลางวัน -> เพื่อกดสลับไปกลางคืน) */
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              /* ไอคอนดวงจันทร์ */
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600 pointer-events-none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
 
           {/* ปุ่มเปิดตะกร้าสินค้า */}
           <button 
+            type="button"
             onClick={() => setIsCartOpen(true)}
-            className="relative p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-sm text-fuchsia-600 dark:text-fuchsia-400 hover:scale-105 active:scale-95 transition-all"
+            className="relative p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-md text-fuchsia-600 dark:text-fuchsia-400 hover:scale-105 active:scale-95 transition-all cursor-pointer"
             title="เปิดตะกร้าสินค้า"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -228,6 +242,7 @@ export default function HomePage() {
               สินค้าของคุณ ({products.length})
             </h3>
             <button 
+              type="button"
               onClick={() => setShowAddForm(!showAddForm)}
               className="text-xs text-fuchsia-600 dark:text-fuchsia-400 font-semibold hover:underline flex items-center gap-1"
             >
@@ -304,7 +319,7 @@ export default function HomePage() {
 
               <button 
                 type="submit" 
-                className="w-full py-2 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white rounded-lg text-xs font-semibold shadow-sm transition-opacity mt-2"
+                className="w-full py-2 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white rounded-lg text-xs font-semibold shadow-sm transition-opacity mt-2 cursor-pointer"
               >
                 ยืนยันการเพิ่มสินค้า
               </button>
@@ -343,14 +358,16 @@ export default function HomePage() {
 
                 <div className="p-2 pt-0 flex gap-1">
                   <button 
+                    type="button"
                     onClick={() => addToCart(product)} 
-                    className="flex-1 py-1.5 bg-pink-100/70 dark:bg-slate-700 text-fuchsia-700 dark:text-pink-300 rounded-lg text-[10px] font-semibold hover:bg-pink-200/70 transition-colors"
+                    className="flex-1 py-1.5 bg-pink-100/70 dark:bg-slate-700 text-fuchsia-700 dark:text-pink-300 rounded-lg text-[10px] font-semibold hover:bg-pink-200/70 transition-colors cursor-pointer"
                   >
                     + ใส่ตะกร้า
                   </button>
                   <button 
+                    type="button"
                     onClick={() => handleDeleteProduct(product.id)} 
-                    className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+                    className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors cursor-pointer"
                     title="ลบสินค้า"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -366,15 +383,16 @@ export default function HomePage() {
       {/* หน้าต่างตะกร้าสินค้า (Cart Drawer) */}
       {isCartOpen && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full p-5 flex flex-col justify-between shadow-2xl">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-pink-100 dark:border-slate-800">
                 <h3 className="text-base font-bold text-fuchsia-900 dark:text-pink-100 flex items-center gap-2">
                   🛒 ตะกร้าสินค้าของคุณ ({totalItems})
                 </h3>
                 <button 
+                  type="button"
                   onClick={() => setIsCartOpen(false)}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
                 >
                   ✕
                 </button>
@@ -397,9 +415,9 @@ export default function HomePage() {
                       </div>
 
                       <div className="flex items-center gap-2 bg-white dark:bg-slate-700 px-2 py-1 rounded-lg border border-pink-200 dark:border-slate-600 text-xs">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1">-</button>
+                        <button type="button" onClick={() => updateQuantity(item.id, -1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1 cursor-pointer">-</button>
                         <span className="font-semibold text-xs">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1">+</button>
+                        <button type="button" onClick={() => updateQuantity(item.id, 1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1 cursor-pointer">+</button>
                       </div>
                     </div>
                   ))
@@ -413,9 +431,10 @@ export default function HomePage() {
                 <span className="text-lg text-fuchsia-600 dark:text-fuchsia-400">฿{totalPrice}</span>
               </div>
               <button 
+                type="button"
                 onClick={() => setIsCheckoutOpen(true)}
                 disabled={cart.length === 0}
-                className="w-full py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white font-bold rounded-2xl text-xs shadow-md disabled:opacity-50 transition-all active:scale-[0.98]"
+                className="w-full py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white font-bold rounded-2xl text-xs shadow-md disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
               >
                 ดำเนินการชำระเงิน
               </button>
@@ -427,7 +446,7 @@ export default function HomePage() {
       {/* Modal หน้าต่างชำระเงิน */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-2xl border border-pink-100 dark:border-slate-700 relative animate-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-2xl border border-pink-100 dark:border-slate-700 relative">
             {isSuccess ? (
               <div className="py-10 text-center space-y-3">
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
@@ -440,13 +459,14 @@ export default function HomePage() {
               <>
                 <div className="flex items-center justify-between pb-3 border-b border-pink-100 dark:border-slate-700">
                   <h3 className="text-sm font-bold text-slate-800 dark:text-pink-100">ชำระเงิน (ยอดรวม ฿{totalPrice})</h3>
-                  <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+                  <button type="button" onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 my-4">
                   <button
+                    type="button"
                     onClick={() => setPaymentMethod('promptpay')}
-                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       paymentMethod === 'promptpay'
                         ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-300'
                         : 'border-slate-200 dark:border-slate-700 text-slate-500'
@@ -457,8 +477,9 @@ export default function HomePage() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setPaymentMethod('cash')}
-                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       paymentMethod === 'cash'
                         ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-300'
                         : 'border-slate-200 dark:border-slate-700 text-slate-500'
@@ -503,8 +524,9 @@ export default function HomePage() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleConfirmPayment}
-                  className="w-full mt-4 py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-opacity"
+                  className="w-full mt-4 py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-opacity cursor-pointer"
                 >
                   ยืนยันการชำระเงิน (฿{totalPrice})
                 </button>
