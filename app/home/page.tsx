@@ -21,6 +21,12 @@ export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // State สำหรับ Modal ชำระเงิน
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'cash'>('promptpay');
+  const [slipImage, setSlipImage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   // State สำหรับ Form ลงขาย
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -43,6 +49,18 @@ export default function HomePage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // ฟังก์ชันอัปโหลดสลิป
+  const handleSlipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSlipImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -102,7 +120,18 @@ export default function HomePage() {
     );
   };
 
-  // คำนวณราคารวม และจำนวนชิ้นรวม
+  // ฟังก์ชันกดยืนยันสั่งซื้อ
+  const handleConfirmPayment = () => {
+    setIsSuccess(true);
+    setTimeout(() => {
+      setIsSuccess(false);
+      setIsCheckoutOpen(false);
+      setIsCartOpen(false);
+      setCart([]);
+      setSlipImage(null);
+    }, 2000);
+  };
+
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -130,10 +159,8 @@ export default function HomePage() {
             title={isDarkMode ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
             {isDarkMode ? (
-              /* ไอคอนดวงอาทิตย์ (โหมดกลางคืนใช้งานอยู่) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
-              /* ไอคอนดวงจันทร์ (โหมดกลางวันใช้งานอยู่) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
@@ -316,36 +343,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ชำระเงิน */}
-        <div className="mt-2 rounded-2xl bg-white dark:bg-slate-800 border border-pink-200/80 dark:border-pink-900/30 p-4 shadow-sm">
-          <h3 className="text-xs font-semibold text-fuchsia-900/60 dark:text-pink-300/60 mb-3 uppercase tracking-wider">ช่องทางการชำระเงิน</h3>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-pink-50/50 dark:bg-slate-700/50 border border-pink-100 dark:border-pink-950">
-              <div className="w-7 h-7 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center font-bold text-[10px]">QR</div>
-              <div>
-                <p className="font-semibold text-xs">PromptPay</p>
-                <p className="text-[10px] text-fuchsia-950/50 dark:text-pink-300/50">สแกนจ่ายทันที</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-pink-50/50 dark:bg-slate-700/50 border border-pink-100 dark:border-pink-950">
-              <div className="w-7 h-7 rounded-lg bg-pink-100 dark:bg-pink-950 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold text-[10px]">💵</div>
-              <div>
-                <p className="font-semibold text-xs">เงินสด</p>
-                <p className="text-[10px] text-fuchsia-950/50 dark:text-pink-300/50">นัดรับในวิทยาลัย</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* หน้าต่างตะกร้าสินค้า (Cart Drawer) */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-200">
             <div>
-              {/* ตะกร้า Header */}
               <div className="flex items-center justify-between pb-4 border-b border-pink-100 dark:border-slate-800">
                 <h3 className="text-base font-bold text-fuchsia-900 dark:text-pink-100 flex items-center gap-2">
                   🛒 ตะกร้าสินค้าของคุณ ({totalItems})
@@ -358,7 +362,6 @@ export default function HomePage() {
                 </button>
               </div>
 
-              {/* รายการสินค้าในตะกร้า */}
               <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                 {cart.length === 0 ? (
                   <div className="text-center py-10 text-slate-400 text-xs">
@@ -375,7 +378,6 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* ปุ่มปรับจำนวน */}
                       <div className="flex items-center gap-2 bg-white dark:bg-slate-700 px-2 py-1 rounded-lg border border-pink-200 dark:border-slate-600 text-xs">
                         <button onClick={() => updateQuantity(item.id, -1)} className="text-fuchsia-600 dark:text-fuchsia-300 font-bold px-1">-</button>
                         <span className="font-semibold text-xs">{item.quantity}</span>
@@ -387,19 +389,118 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* สรุปราคาและปุ่มสั่งซื้อ */}
+            {/* ส่วนสรุปราคาและปุ่มดำเนินการชำระเงิน */}
             <div className="pt-4 border-t border-pink-100 dark:border-slate-800 space-y-3">
               <div className="flex justify-between items-center text-sm font-bold">
                 <span>ราคารวมทั้งหมด:</span>
                 <span className="text-lg text-fuchsia-600 dark:text-fuchsia-400">฿{totalPrice}</span>
               </div>
               <button 
+                onClick={() => setIsCheckoutOpen(true)}
                 disabled={cart.length === 0}
-                className="w-full py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md disabled:opacity-50 transition-opacity"
+                className="w-full py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white font-bold rounded-2xl text-xs shadow-md disabled:opacity-50 transition-all active:scale-[0.98]"
               >
                 ดำเนินการชำระเงิน
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal หน้าต่างชำระเงิน (Checkout Modal) */}
+      {isCheckoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-2xl border border-pink-100 dark:border-slate-700 relative animate-in zoom-in-95 duration-150">
+            
+            {/* ป๊อปอัปแจ้งเตือนเมื่อสั่งซื้อสำเร็จ */}
+            {isSuccess ? (
+              <div className="py-10 text-center space-y-3">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
+                  ✓
+                </div>
+                <h3 className="text-base font-bold text-slate-800 dark:text-white">ทำรายการสำเร็จ!</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">ขอบคุณที่ใช้บริการตลาดนัดเด็กวิทยาลัย</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between pb-3 border-b border-pink-100 dark:border-slate-700">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-pink-100">ชำระเงิน (ยอดรวม ฿{totalPrice})</h3>
+                  <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+                </div>
+
+                {/* ตัวเลือกวิธีการชำระเงิน */}
+                <div className="grid grid-cols-2 gap-2 my-4">
+                  <button
+                    onClick={() => setPaymentMethod('promptpay')}
+                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                      paymentMethod === 'promptpay'
+                        ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-300'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-500'
+                    }`}
+                  >
+                    <span className="text-base">📱</span>
+                    PromptPay (สแกน QR)
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                      paymentMethod === 'cash'
+                        ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-300'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-500'
+                    }`}
+                  >
+                    <span className="text-base">💵</span>
+                    เงินสด (นัดรับ)
+                  </button>
+                </div>
+
+                {/* รายละเอียดการชำระเงิน */}
+                <div className="bg-pink-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-pink-100 dark:border-slate-700 text-center space-y-3">
+                  {paymentMethod === 'promptpay' ? (
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-2">สแกน QR Code เพื่อชำระเงิน</p>
+                      
+                      {/* รูป QR Code จำลอง */}
+                      <div className="bg-white p-3 rounded-xl inline-block shadow-sm border border-slate-100">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PromptPay-Amount-${totalPrice}`} 
+                          alt="PromptPay QR Code" 
+                          className="w-32 h-32 mx-auto"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2">พร้อมเพย์: 08X-XXX-XXXX (ชื่อบัญชี: ตลาดนัดเด็กวิทยาลัย)</p>
+
+                      {/* แนบสลิป */}
+                      <div className="mt-3 text-left">
+                        <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">แนบหลักฐานการโอน (สลิป):</label>
+                        <input type="file" accept="image/*" onChange={handleSlipUpload} className="text-[10px] text-slate-500 w-full file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-fuchsia-100 file:text-fuchsia-700 hover:file:bg-fuchsia-200 cursor-pointer" />
+                        {slipImage && <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ แนบไฟล์สลิปเรียบร้อยแล้ว</p>}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-2 text-left space-y-2">
+                      <p className="text-xs font-semibold text-fuchsia-900 dark:text-pink-200">📍 ข้อมูลการนัดรับสินค้า</p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                        สามารถนัดรับและชำระเงินสดได้ที่ **ใต้อาคารเรียนรวม / โรงอาหารกลาง**
+                      </p>
+                      <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl text-[10px] text-slate-500 border border-slate-200 dark:border-slate-700">
+                        💡 เมื่อกดยืนยันแล้ว ผู้ขายจะติดต่อกลับทางเบอร์โทรศัพท์เพื่อยืนยันเวลานัดรับสินค้า
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ปุ่มยืนยันชำระเงิน */}
+                <button
+                  onClick={handleConfirmPayment}
+                  className="w-full mt-4 py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-opacity"
+                >
+                  ยืนยันการชำระเงิน (฿{totalPrice})
+                </button>
+              </>
+            )}
+
           </div>
         </div>
       )}
