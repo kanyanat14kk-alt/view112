@@ -3,9 +3,26 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+// กำหนดโครงสร้างข้อมูลสินค้า
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+}
+
 export default function HomePage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+
+  // State สำหรับจัดการสินค้า
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // State สำหรับ Form กรอกข้อมูล
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [category, setCategory] = useState('ตำราเรียน');
 
   // สลับ Dark / Light Mode
   useEffect(() => {
@@ -16,13 +33,35 @@ export default function HomePage() {
     }
   }, [isDarkMode]);
 
+  // ฟังก์ชันเพิ่มสินค้าใหม่
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !price) return;
+
+    const newProduct: Product = {
+      id: Date.now(),
+      name: name,
+      price: Number(price),
+      category: category,
+    };
+
+    setProducts([newProduct, ...products]);
+    setName('');
+    setPrice('');
+    setShowAddForm(false);
+  };
+
+  // ฟังก์ชันลบสินค้า
+  const handleDeleteProduct = (id: number) => {
+    setProducts(products.filter((p) => p.id !== id));
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
       <div className="flex flex-col gap-5 pb-20 pt-4 px-4 max-w-md mx-auto">
         
-        {/* Header Bar: ปุ่ม Dark Mode & ตะกร้าสินค้า */}
+        {/* Header Bar */}
         <div className="flex items-center justify-between gap-3">
-          {/* ช่องค้นหา */}
           <div className="relative flex-1">
             <div className="absolute left-3 top-3 text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -34,26 +73,23 @@ export default function HomePage() {
             />
           </div>
 
-          {/* ปุ่มสลับโหมดกลางวัน/กลางคืน */}
+          {/* ปุ่มสลับโหมด Dark/Light */}
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            title="สลับโหมดกลางวัน/กลางคืน"
           >
             {isDarkMode ? (
-              /* ไอคอนดวงอาทิตย์ */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
-              /* ไอคอนพระจันทร์ */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
 
-          {/* ปุ่มตะกร้าสินค้า */}
-          <Link href="/cart" className="relative p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+          {/* ตะกร้าสินค้า */}
+          <Link href="/cart" className="relative p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {cartCount}
               </span>
             )}
@@ -82,26 +118,120 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* รายการสินค้า (พร้อมปุ่มเพิ่มสินค้าใหม่) */}
+        {/* โซนสินค้าทั้งหมด + เพิ่มสินค้า */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center gap-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-              สินค้าทั้งหมด
+              สินค้าของคุณ ({products.length})
             </h3>
-            <Link href="/product" className="text-xs text-indigo-500 font-medium hover:underline">ดูทั้งหมด</Link>
+            <button 
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="text-xs text-indigo-500 font-medium hover:underline flex items-center gap-1"
+            >
+              {showAddForm ? 'ปิดฟอร์ม' : '+ เพิ่มสินค้า'}
+            </button>
           </div>
 
-          {/* พื้นที่สำหรับลงสินค้าใหม่ */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* ปุ่มกดลงขายสินค้าใหม่ */}
-            <div className="rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50 h-44 flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-indigo-500 transition-colors">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          {/* ฟอร์มลงขายสินค้าใหม่ */}
+          {showAddForm && (
+            <form onSubmit={handleAddProduct} className="mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 shadow-md space-y-3">
+              <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400">ลงขายสินค้าใหม่</h4>
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1">ชื่อสินค้า</label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  placeholder="เช่น หนังสือ แคลคูลัส 1" 
+                  required 
+                  className="w-full text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
               </div>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">เพิ่มสินค้าของคุณ</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">กดที่นี่เพื่อเพิ่มสินค้าลงขาย</p>
-            </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">ราคา (บาท)</label>
+                  <input 
+                    type="number" 
+                    value={price} 
+                    onChange={(e) => setPrice(e.target.value)} 
+                    placeholder="250" 
+                    required 
+                    className="w-full text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">หมวดหมู่</label>
+                  <select 
+                    value={category} 
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="ตำราเรียน">ตำราเรียน</option>
+                    <option value="ยูนิฟอร์ม">ยูนิฟอร์ม</option>
+                    <option value="ไอที/อุปกรณ์">ไอที/อุปกรณ์</option>
+                    <option value="ของใช้หอ">ของใช้หอ</option>
+                  </select>
+                </div>
+              </div>
+              <button 
+                type="submit" 
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors mt-2"
+              >
+                ยืนยันการเพิ่มสินค้า
+              </button>
+            </form>
+          )}
+
+          {/* รายการสินค้าที่เพิ่มแล้ว */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* การ์ดกดลงขายสินค้า */}
+            {!showAddForm && (
+              <div 
+                onClick={() => setShowAddForm(true)}
+                className="rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50 h-44 flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-indigo-500 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                </div>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">+ เพิ่มสินค้าใหม่</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">กดที่นี่เพื่อลงขาย</p>
+              </div>
+            )}
+
+            {/* แสดงรายการสินค้าที่ลงไว้ */}
+            {products.map((product) => (
+              <div key={product.id} className="relative rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 overflow-hidden shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="h-28 bg-slate-100 dark:bg-slate-700/50 flex items-center justify-center text-xs text-slate-400 p-2 text-center">
+                    🖼️ รูปสินค้า
+                  </div>
+                  <div className="p-3">
+                    <span className="text-[9px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium">
+                      {product.category}
+                    </span>
+                    <p className="text-xs font-semibold truncate mt-1.5">{product.name}</p>
+                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mt-1">฿{product.price}</p>
+                  </div>
+                </div>
+
+                <div className="p-2 pt-0 flex gap-1">
+                  <button 
+                    onClick={() => setCartCount(cartCount + 1)} 
+                    className="flex-1 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-lg text-[10px] font-semibold hover:bg-indigo-100 transition-colors"
+                  >
+                    + ใส่ตะกร้า
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)} 
+                    className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+                    title="ลบสินค้า"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
