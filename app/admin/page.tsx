@@ -11,6 +11,38 @@ interface Product {
   image: string;
 }
 
+// รายการสินค้าตั้งต้นพร้อมรูปสวยๆ
+const DEFAULT_PRODUCTS: Product[] = [
+  {
+    id: 1,
+    name: 'หนังสือ Calculus 1 สำหรับวิศวะ',
+    price: 250,
+    category: 'ตำราเรียน',
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 2,
+    name: 'เสื้อช็อปเด็กวิศวะ ไซส์ L (สภาพดี)',
+    price: 190,
+    category: 'ยูนิฟอร์ม',
+    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 3,
+    name: 'iPad Air 4 (64GB) สี Space Gray',
+    price: 9900,
+    category: 'ไอที/อุปกรณ์',
+    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 4,
+    name: 'พัดลมตั้งโต๊ะ Minimal สีขาว',
+    price: 220,
+    category: 'ของใช้หอ',
+    image: 'https://images.unsplash.com/photo-1618941709602-92849f611096?w=500&auto=format&fit=crop&q=80',
+  },
+];
+
 export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -21,27 +53,34 @@ export default function AdminPage() {
   const [category, setCategory] = useState('ตำราเรียน');
   const [image, setImage] = useState('');
 
-  // ดึงข้อมูลสินค้าจาก localStorage เมื่อเข้าหน้าเว็บ
+  // ดึงข้อมูลสินค้าเดิม หรือใส่ค่าเริ่มต้นทันที
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem('my_products');
     if (saved) {
       try {
-        setProducts(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0) {
+          setProducts(parsed);
+        } else {
+          setProducts(DEFAULT_PRODUCTS);
+        }
       } catch (e) {
-        console.error(e);
+        setProducts(DEFAULT_PRODUCTS);
       }
+    } else {
+      setProducts(DEFAULT_PRODUCTS);
     }
   }, []);
 
-  // บันทึกสินค้าลง localStorage ทุกครั้งที่รายการเปลี่ยน
+  // บันทึกลง localStorage เมื่อมีการเปลี่ยนแปลง
   useEffect(() => {
-    if (mounted) {
+    if (mounted && products.length >= 0) {
       localStorage.setItem('my_products', JSON.stringify(products));
     }
   }, [products, mounted]);
 
-  // ฟังก์ชันแปลงรูปภาพเป็น Base64
+  // แปลงรูปภาพเป็น Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -53,7 +92,7 @@ export default function AdminPage() {
     }
   };
 
-  // เพิ่มสินค้าใหม่
+  // เพิ่มสินค้า
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !price) return;
@@ -63,14 +102,14 @@ export default function AdminPage() {
       name,
       price: Number(price),
       category,
-      image: image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80',
+      image: image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80',
     };
 
     setProducts([newProduct, ...products]);
     setName('');
     setPrice('');
     setImage('');
-    alert('เพิ่มสินค้าสำเร็จ!');
+    alert('เพิ่มสินค้าเรียบร้อยแล้ว!');
   };
 
   // ลบสินค้า
@@ -80,37 +119,44 @@ export default function AdminPage() {
     }
   };
 
+  // รีเซ็ตกลับไปเป็นสินค้าตั้งต้น
+  const handleResetDefault = () => {
+    if (confirm('ต้องการรีเซ็ตกลับเป็นสินค้าตัวอย่างเริ่มต้นหรือไม่?')) {
+      setProducts(DEFAULT_PRODUCTS);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 p-4 font-sans">
-      <div className="max-w-xl mx-auto space-y-5">
+      <div className="max-w-md mx-auto space-y-5">
         
         {/* Header แอดมิน */}
         <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
           <div>
-            <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              ⚙️ ระบบจัดการหลังบ้าน (Admin)
+            <h1 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+              ⚙️ แผงควบคุมแอดมิน
             </h1>
-            <p className="text-xs text-slate-500">จัดการเพิ่ม/ลบ สินค้าในระบบ</p>
+            <p className="text-[11px] text-slate-500">จัดการเพิ่ม/ลบ สินค้าหน้าร้าน</p>
           </div>
           <Link 
             href="/home" 
             className="text-xs bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold px-3 py-2 rounded-xl shadow-sm transition-all"
           >
-            ← ไปหน้าหน้าร้าน
+            ← ดูหน้าร้าน
           </Link>
         </div>
 
-        {/* ฟอร์มเพิ่มสินค้าใหม่ */}
+        {/* ฟอร์มเพิ่มสินค้า */}
         <form onSubmit={handleAddProduct} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <h2 className="text-sm font-bold text-fuchsia-600 border-b pb-2">➕ เพิ่มสินค้าใหม่</h2>
+          <h2 className="text-xs font-bold text-fuchsia-600 border-b pb-2">➕ เพิ่มสินค้าใหม่</h2>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1">รูปภาพสินค้า</label>
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">รูปภาพสินค้า</label>
             <input 
               type="file" 
               accept="image/*" 
               onChange={handleImageUpload} 
-              className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-50 file:text-fuchsia-700 cursor-pointer border rounded-xl p-1" 
+              className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-fuchsia-50 file:text-fuchsia-700 border rounded-xl p-1" 
             />
             {image && (
               <div className="mt-2 w-full h-32 rounded-xl overflow-hidden border">
@@ -120,12 +166,12 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1">ชื่อสินค้า</label>
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">ชื่อสินค้า</label>
             <input 
               type="text" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
-              placeholder="เช่น หนังสือ แคลคูลัส 1" 
+              placeholder="เช่น หนังสือ Physics 1" 
               required 
               className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
             />
@@ -133,19 +179,19 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-1">ราคา (บาท)</label>
+              <label className="text-[11px] font-semibold text-slate-600 block mb-1">ราคา (บาท)</label>
               <input 
                 type="number" 
                 value={price} 
                 onChange={(e) => setPrice(e.target.value)} 
-                placeholder="250" 
+                placeholder="200" 
                 required 
                 className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
               />
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-1">หมวดหมู่</label>
+              <label className="text-[11px] font-semibold text-slate-600 block mb-1">หมวดหมู่</label>
               <select 
                 value={category} 
                 onChange={(e) => setCategory(e.target.value)}
@@ -163,33 +209,41 @@ export default function AdminPage() {
             type="submit" 
             className="w-full py-2.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold rounded-xl text-xs shadow-md transition-all mt-2 cursor-pointer"
           >
-            บันทึกและเพิ่มสินค้า
+            บันทึกและแสดงหน้าร้าน
           </button>
         </form>
 
-        {/* รายการสินค้าที่มีในระบบ */}
+        {/* รายการสินค้าในระบบ */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <h2 className="text-sm font-bold text-slate-800 border-b pb-2">
-            📦 รายการสินค้าทั้งหมด ({products.length})
-          </h2>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h2 className="text-xs font-bold text-slate-800">
+              📦 รายการสินค้าทั้งหมด ({products.length})
+            </h2>
+            <button 
+              onClick={handleResetDefault}
+              className="text-[10px] text-fuchsia-600 underline hover:text-fuchsia-800"
+            >
+              ดึงสินค้าตัวอย่างกลับมา
+            </button>
+          </div>
 
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {products.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">ยังไม่มีสินค้าในระบบ</p>
+              <p className="text-xs text-slate-400 text-center py-6">ไม่มีสินค้าในระบบ</p>
             ) : (
               products.map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50">
-                  <div className="flex items-center gap-3">
-                    <img src={product.image} alt={product.name} className="w-12 h-12 rounded-lg object-cover border" />
+                <div key={product.id} className="flex items-center justify-between p-2 rounded-xl border border-slate-100 bg-slate-50">
+                  <div className="flex items-center gap-2.5">
+                    <img src={product.image} alt={product.name} className="w-11 h-11 rounded-lg object-cover border" />
                     <div>
-                      <p className="text-xs font-bold text-slate-800">{product.name}</p>
+                      <p className="text-xs font-bold text-slate-800 truncate max-w-[140px]">{product.name}</p>
                       <p className="text-[10px] text-fuchsia-600 font-semibold">฿{product.price} ({product.category})</p>
                     </div>
                   </div>
 
                   <button 
                     onClick={() => handleDeleteProduct(product.id)}
-                    className="p-2 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                    className="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer"
                   >
                     ลบ
                   </button>
