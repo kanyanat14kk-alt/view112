@@ -35,14 +35,33 @@ export default function HomePage() {
   const [category, setCategory] = useState('ตำราเรียน');
   const [image, setImage] = useState('');
 
-  // โหลดค่าโหมดเดิมจาก localStorage
+  // 1. ดึงข้อมูลสินค้า และ Theme จาก localStorage เมื่อโหลดหน้าเว็บครั้งแรก
   useEffect(() => {
     setMounted(true);
+
+    // ดึง Theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
     }
+
+    // ดึงรายการสินค้าที่เคยเซฟไว้
+    const savedProducts = localStorage.getItem('my_products');
+    if (savedProducts) {
+      try {
+        setProducts(JSON.parse(savedProducts));
+      } catch (error) {
+        console.error('Failed to parse products from localStorage:', error);
+      }
+    }
   }, []);
+
+  // 2. บันทึกข้อมูลสินค้าลง localStorage ทุกครั้งที่มีการเพิ่ม/ลบสินค้า
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('my_products', JSON.stringify(products));
+    }
+  }, [products, mounted]);
 
   // ฟังก์ชันสลับโหมด กลางวัน / กลางคืน
   const toggleDarkMode = () => {
@@ -90,7 +109,7 @@ export default function HomePage() {
       image: image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80',
     };
 
-    setProducts([newProduct, ...products]);
+    setProducts((prev) => [newProduct, ...prev]);
     setName('');
     setPrice('');
     setImage('');
@@ -99,8 +118,8 @@ export default function HomePage() {
 
   // ฟังก์ชันลบสินค้าออกจากระบบ
   const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter((p) => p.id !== id));
-    setCart(cart.filter((item) => item.id !== id));
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
   // ฟังก์ชันเพิ่มสินค้าเข้าตะกร้า
@@ -165,7 +184,7 @@ export default function HomePage() {
             />
           </div>
 
-          {/* 🔘 ปุ่มสลับโหมด กลางวัน / กลางคืน 🔘 */}
+          {/* ปุ่มสลับโหมด กลางวัน / กลางคืน */}
           <button 
             type="button"
             onClick={toggleDarkMode}
@@ -175,10 +194,8 @@ export default function HomePage() {
             title={isDarkMode ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
             {mounted && isDarkMode ? (
-              /* ไอคอนดวงอาทิตย์ (โหมดกลางคืน -> กดเพื่อเป็นกลางวัน) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 pointer-events-none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
-              /* ไอคอนดวงจันทร์ (โหมดกลางวัน -> กดเพื่อเป็นกลางคืน) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600 pointer-events-none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
