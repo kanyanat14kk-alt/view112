@@ -33,14 +33,30 @@ export default function HomePage() {
   const [category, setCategory] = useState('ตำราเรียน');
   const [image, setImage] = useState('');
 
-  // ระบบสลับ Dark Mode / Light Mode
+  // อ่านค่า Dark Mode เดิมจาก localStorage เมื่อโหลดหน้าเว็บครั้งแรก
   useEffect(() => {
-    if (isDarkMode) {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     } else {
+      setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
     }
-  }, [isDarkMode]);
+  }, []);
+
+  // ฟังก์ชันกดสลับโหมด กลางวัน / กลางคืน
+  const toggleDarkMode = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
 
   // ฟังก์ชันแปลงรูปภาพเป็น Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +152,7 @@ export default function HomePage() {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-pink-50/50 dark:bg-slate-900 text-slate-800 dark:text-pink-50 transition-colors duration-200">
+    <div className="min-h-screen bg-pink-50/50 dark:bg-slate-900 text-slate-800 dark:text-pink-50 transition-colors duration-300">
       <div className="flex flex-col gap-5 pb-20 pt-4 px-4 max-w-md mx-auto">
         
         {/* Header Bar */}
@@ -148,19 +164,21 @@ export default function HomePage() {
             <input 
               type="text" 
               placeholder="ค้นหาหนังสือ, อุปกรณ์..." 
-              className="w-full rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-fuchsia-400 shadow-sm"
+              className="w-full rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-fuchsia-400 shadow-sm transition-colors"
             />
           </div>
 
-          {/* ปุ่มสลับโหมดกลางวัน / กลางคืน */}
+          {/* 🔘 ปุ่มสลับโหมด กลางวัน / กลางคืน 🔘 */}
           <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm hover:bg-pink-100/50 dark:hover:bg-slate-700 transition-colors"
-            title={isDarkMode ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดกลางคืน"}
+            onClick={toggleDarkMode}
+            className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-sm hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center"
+            title={isDarkMode ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
             {isDarkMode ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+              /* ไอคอนดวงอาทิตย์ (สำหรับโหมดกลางคืน -> เพื่อกดสลับไปกลางวัน) */
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 animate-spin-slow"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             ) : (
+              /* ไอคอนดวงจันทร์ (สำหรับโหมดกลางวัน -> เพื่อกดสลับไปกลางคืน) */
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
             )}
           </button>
@@ -168,7 +186,7 @@ export default function HomePage() {
           {/* ปุ่มเปิดตะกร้าสินค้า */}
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="relative p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-pink-900/50 shadow-sm text-fuchsia-600 dark:text-fuchsia-400 hover:bg-pink-100/50 dark:hover:bg-slate-700 transition-colors"
+            className="relative p-2.5 rounded-full bg-white dark:bg-slate-800 border border-pink-200 dark:border-slate-700 shadow-sm text-fuchsia-600 dark:text-fuchsia-400 hover:scale-105 active:scale-95 transition-all"
             title="เปิดตะกร้าสินค้า"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -195,7 +213,7 @@ export default function HomePage() {
           </h3>
           <div className="grid grid-cols-4 gap-2 text-center text-xs">
             {['ตำราเรียน', 'ยูนิฟอร์ม', 'ไอที/อุปกรณ์', 'ของใช้หอ'].map((cat, i) => (
-              <div key={i} className="rounded-xl border border-pink-200/80 dark:border-pink-950 bg-white dark:bg-slate-800 p-2.5 hover:border-fuchsia-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 cursor-pointer transition-colors shadow-sm font-medium">
+              <div key={i} className="rounded-xl border border-pink-200/80 dark:border-slate-800 bg-white dark:bg-slate-800 p-2.5 hover:border-fuchsia-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 cursor-pointer transition-colors shadow-sm font-medium">
                 {cat}
               </div>
             ))}
@@ -219,20 +237,20 @@ export default function HomePage() {
 
           {/* ฟอร์มลงขายสินค้าใหม่ */}
           {showAddForm && (
-            <form onSubmit={handleAddProduct} className="mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-fuchsia-200 dark:border-fuchsia-900/50 shadow-md space-y-3">
+            <form onSubmit={handleAddProduct} className="mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-fuchsia-200 dark:border-slate-700 shadow-md space-y-3">
               <h4 className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400">ลงขายสินค้าใหม่ ✨</h4>
               
               <div>
                 <label className="text-[10px] text-fuchsia-900/60 dark:text-pink-300/60 block mb-1">รูปภาพสินค้า</label>
                 <div className="flex items-center gap-2">
-                  <label className="flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed border-pink-200 dark:border-pink-900 rounded-xl cursor-pointer hover:border-fuchsia-400 transition-colors bg-pink-50/50 dark:bg-slate-700/50">
+                  <label className="flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed border-pink-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-fuchsia-400 transition-colors bg-pink-50/50 dark:bg-slate-700/50">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-400 mb-1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                     <span className="text-[10px] text-fuchsia-700 dark:text-pink-300">กดเพื่อเลือกรูปภาพจากเครื่อง</span>
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 </div>
                 {image && (
-                  <div className="mt-2 relative w-full h-28 rounded-lg overflow-hidden border border-pink-200 dark:border-pink-900">
+                  <div className="mt-2 relative w-full h-28 rounded-lg overflow-hidden border border-pink-200 dark:border-slate-700">
                     <img src={image} alt="Preview" className="w-full h-full object-cover" />
                     <button 
                       type="button" 
@@ -298,9 +316,9 @@ export default function HomePage() {
             {!showAddForm && (
               <div 
                 onClick={() => setShowAddForm(true)}
-                className="rounded-xl border-2 border-dashed border-pink-300 dark:border-pink-900/70 bg-white/50 dark:bg-slate-800/50 h-52 flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-fuchsia-400 transition-colors"
+                className="rounded-xl border-2 border-dashed border-pink-300 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 h-52 flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-fuchsia-400 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-950/80 flex items-center justify-center text-fuchsia-600 dark:text-fuchsia-400 mb-2">
+                <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-slate-700 flex items-center justify-center text-fuchsia-600 dark:text-fuchsia-400 mb-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 </div>
                 <p className="text-xs font-semibold text-fuchsia-950 dark:text-pink-200">+ เพิ่มสินค้าใหม่</p>
@@ -315,7 +333,7 @@ export default function HomePage() {
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="p-3">
-                    <span className="text-[9px] bg-pink-100 dark:bg-pink-950/80 text-fuchsia-700 dark:text-pink-300 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-[9px] bg-pink-100 dark:bg-slate-700 text-fuchsia-700 dark:text-pink-300 px-2 py-0.5 rounded-full font-medium">
                       {product.category}
                     </span>
                     <p className="text-xs font-semibold truncate mt-1.5">{product.name}</p>
@@ -326,7 +344,7 @@ export default function HomePage() {
                 <div className="p-2 pt-0 flex gap-1">
                   <button 
                     onClick={() => addToCart(product)} 
-                    className="flex-1 py-1.5 bg-pink-100/70 dark:bg-pink-950/50 text-fuchsia-700 dark:text-pink-300 rounded-lg text-[10px] font-semibold hover:bg-pink-200/70 transition-colors"
+                    className="flex-1 py-1.5 bg-pink-100/70 dark:bg-slate-700 text-fuchsia-700 dark:text-pink-300 rounded-lg text-[10px] font-semibold hover:bg-pink-200/70 transition-colors"
                   >
                     + ใส่ตะกร้า
                   </button>
@@ -389,7 +407,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* ส่วนสรุปราคาและปุ่มดำเนินการชำระเงิน */}
             <div className="pt-4 border-t border-pink-100 dark:border-slate-800 space-y-3">
               <div className="flex justify-between items-center text-sm font-bold">
                 <span>ราคารวมทั้งหมด:</span>
@@ -407,12 +424,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Modal หน้าต่างชำระเงิน (Checkout Modal) */}
+      {/* Modal หน้าต่างชำระเงิน */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-2xl border border-pink-100 dark:border-slate-700 relative animate-in zoom-in-95 duration-150">
-            
-            {/* ป๊อปอัปแจ้งเตือนเมื่อสั่งซื้อสำเร็จ */}
             {isSuccess ? (
               <div className="py-10 text-center space-y-3">
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
@@ -428,7 +443,6 @@ export default function HomePage() {
                   <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
                 </div>
 
-                {/* ตัวเลือกวิธีการชำระเงิน */}
                 <div className="grid grid-cols-2 gap-2 my-4">
                   <button
                     onClick={() => setPaymentMethod('promptpay')}
@@ -455,13 +469,11 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                {/* รายละเอียดการชำระเงิน */}
                 <div className="bg-pink-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-pink-100 dark:border-slate-700 text-center space-y-3">
                   {paymentMethod === 'promptpay' ? (
                     <div>
                       <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-2">สแกน QR Code เพื่อชำระเงิน</p>
                       
-                      {/* รูป QR Code จำลอง */}
                       <div className="bg-white p-3 rounded-xl inline-block shadow-sm border border-slate-100">
                         <img 
                           src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PromptPay-Amount-${totalPrice}`} 
@@ -471,7 +483,6 @@ export default function HomePage() {
                       </div>
                       <p className="text-[10px] text-slate-400 mt-2">พร้อมเพย์: 08X-XXX-XXXX (ชื่อบัญชี: ตลาดนัดเด็กวิทยาลัย)</p>
 
-                      {/* แนบสลิป */}
                       <div className="mt-3 text-left">
                         <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">แนบหลักฐานการโอน (สลิป):</label>
                         <input type="file" accept="image/*" onChange={handleSlipUpload} className="text-[10px] text-slate-500 w-full file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-fuchsia-100 file:text-fuchsia-700 hover:file:bg-fuchsia-200 cursor-pointer" />
@@ -491,7 +502,6 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* ปุ่มยืนยันชำระเงิน */}
                 <button
                   onClick={handleConfirmPayment}
                   className="w-full mt-4 py-3 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-opacity"
