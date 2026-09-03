@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Product {
   id: number;
@@ -21,7 +22,6 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
 
   // State สำหรับ Modal ชำระเงิน
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -29,39 +29,22 @@ export default function HomePage() {
   const [slipImage, setSlipImage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // State สำหรับ Form ลงขาย
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('ตำราเรียน');
-  const [image, setImage] = useState('');
-
-  // 1. ดึงข้อมูลสินค้า และ Theme จาก localStorage เมื่อโหลดหน้าเว็บครั้งแรก
+  // ดึงข้อมูลสินค้า และ โหมดสี จาก localStorage
   useEffect(() => {
     setMounted(true);
 
-    // ดึง Theme
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-    }
+    if (savedTheme === 'dark') setIsDarkMode(true);
 
-    // ดึงรายการสินค้าที่เคยเซฟไว้
     const savedProducts = localStorage.getItem('my_products');
     if (savedProducts) {
       try {
         setProducts(JSON.parse(savedProducts));
       } catch (error) {
-        console.error('Failed to parse products from localStorage:', error);
+        console.error(error);
       }
     }
   }, []);
-
-  // 2. บันทึกข้อมูลสินค้าลง localStorage ทุกครั้งที่มีการเพิ่ม/ลบสินค้า
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('my_products', JSON.stringify(products));
-    }
-  }, [products, mounted]);
 
   // ฟังก์ชันสลับโหมด กลางวัน / กลางคืน
   const toggleDarkMode = () => {
@@ -70,18 +53,6 @@ export default function HomePage() {
       localStorage.setItem('theme', nextState ? 'dark' : 'light');
       return nextState;
     });
-  };
-
-  // ฟังก์ชันแปลงรูปภาพเป็น Base64
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   // ฟังก์ชันอัปโหลดสลิป
@@ -94,32 +65,6 @@ export default function HomePage() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  // ฟังก์ชันเพิ่มสินค้าลงระบบ
-  const handleAddProduct = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !price) return;
-
-    const newProduct: Product = {
-      id: Date.now(),
-      name,
-      price: Number(price),
-      category,
-      image: image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80',
-    };
-
-    setProducts((prev) => [newProduct, ...prev]);
-    setName('');
-    setPrice('');
-    setImage('');
-    setShowAddForm(false);
-  };
-
-  // ฟังก์ชันลบสินค้าออกจากระบบ
-  const handleDeleteProduct = (id: number) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
   // ฟังก์ชันเพิ่มสินค้าเข้าตะกร้า
@@ -170,7 +115,7 @@ export default function HomePage() {
       <div className="flex flex-col gap-5 pb-20 pt-4 px-4 max-w-md mx-auto">
         
         {/* Header Bar */}
-        <div className="flex items-center justify-between gap-3 relative z-20">
+        <div className="flex items-center justify-between gap-2 relative z-20">
           <div className="relative flex-1">
             <div className="absolute left-3 top-3 text-fuchsia-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -184,6 +129,16 @@ export default function HomePage() {
             />
           </div>
 
+          {/* ปุ่มไปหน้า Admin */}
+          <Link
+            href="/admin"
+            className={`px-3 py-2 rounded-full border text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1 ${
+              isDarkMode ? 'bg-slate-800 border-slate-700 text-pink-300' : 'bg-white border-pink-200 text-fuchsia-600'
+            }`}
+          >
+            ⚙️ แอดมิน
+          </Link>
+
           {/* ปุ่มสลับโหมด กลางวัน / กลางคืน */}
           <button 
             type="button"
@@ -191,7 +146,6 @@ export default function HomePage() {
             className={`p-2.5 rounded-full border shadow-md hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
               isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-200'
             }`}
-            title={isDarkMode ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
           >
             {mounted && isDarkMode ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 pointer-events-none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
@@ -207,7 +161,6 @@ export default function HomePage() {
             className={`relative p-2.5 rounded-full border shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${
               isDarkMode ? 'bg-slate-800 border-slate-700 text-fuchsia-400' : 'bg-white border-pink-200 text-fuchsia-600'
             }`}
-            title="เปิดตะกร้าสินค้า"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             {totalItems > 0 && (
@@ -228,7 +181,6 @@ export default function HomePage() {
         {/* หมวดหมู่ */}
         <div>
           <h3 className={`mb-2.5 text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-pink-200' : 'text-fuchsia-900'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-500"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
             หมวดหมู่ยอดนิยม
           </h3>
           <div className="grid grid-cols-4 gap-2 text-center text-xs">
@@ -249,149 +201,48 @@ export default function HomePage() {
 
         {/* สินค้าทั้งหมด */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-pink-200' : 'text-fuchsia-900'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pink-500"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-              สินค้าของคุณ ({products.length})
-            </h3>
-            <button 
-              type="button"
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="text-xs text-fuchsia-500 font-semibold hover:underline flex items-center gap-1"
-            >
-              {showAddForm ? 'ปิดฟอร์ม' : '+ เพิ่มสินค้า'}
-            </button>
-          </div>
+          <h3 className={`mb-3 text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-pink-200' : 'text-fuchsia-900'}`}>
+            🛍️ สินค้าทั้งหมด ({products.length})
+          </h3>
 
-          {/* ฟอร์มลงขายสินค้าใหม่ */}
-          {showAddForm && (
-            <form onSubmit={handleAddProduct} className={`mb-4 p-4 rounded-2xl border shadow-md space-y-3 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-fuchsia-200'}`}>
-              <h4 className="text-xs font-bold text-fuchsia-400">ลงขายสินค้าใหม่ ✨</h4>
-              
-              <div>
-                <label className="text-[10px] opacity-70 block mb-1">รูปภาพสินค้า</label>
-                <div className="flex items-center gap-2">
-                  <label className={`flex-1 flex flex-col items-center justify-center p-3 border-2 border-dashed rounded-xl cursor-pointer hover:border-fuchsia-400 transition-colors ${isDarkMode ? 'border-slate-700 bg-slate-700/50' : 'border-pink-200 bg-pink-50/50'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-fuchsia-400 mb-1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                    <span className="text-[10px]">กดเพื่อเลือกรูปภาพจากเครื่อง</span>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                </div>
-                {image && (
-                  <div className="mt-2 relative w-full h-28 rounded-lg overflow-hidden border border-pink-200">
-                    <img src={image} alt="Preview" className="w-full h-full object-cover" />
+          <div className="grid grid-cols-2 gap-3">
+            {products.length === 0 ? (
+              <div className="col-span-2 text-center py-12 bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-pink-200 dark:border-slate-700">
+                <p className="text-xs opacity-60">ยังไม่มีสินค้าในร้าน</p>
+                <Link href="/admin" className="text-xs text-fuchsia-500 font-bold underline mt-1 block">
+                  + เพิ่มสินค้าที่หน้าแอดมิน
+                </Link>
+              </div>
+            ) : (
+              products.map((product) => (
+                <div key={product.id} className={`relative rounded-xl border overflow-hidden shadow-sm flex flex-col justify-between ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-200/80'}`}>
+                  <div>
+                    <div className={`h-32 overflow-hidden relative ${isDarkMode ? 'bg-slate-700' : 'bg-pink-50'}`}>
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-3">
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-medium ${isDarkMode ? 'bg-slate-700 text-pink-300' : 'bg-pink-100 text-fuchsia-700'}`}>
+                        {product.category}
+                      </span>
+                      <p className="text-xs font-semibold truncate mt-1.5">{product.name}</p>
+                      <p className="text-sm font-bold text-fuchsia-500 mt-1">฿{product.price}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-2 pt-0">
                     <button 
-                      type="button" 
-                      onClick={() => setImage('')} 
-                      className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-1 text-[10px]"
+                      type="button"
+                      onClick={() => addToCart(product)} 
+                      className={`w-full py-1.5 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+                        isDarkMode ? 'bg-slate-700 text-pink-300 hover:bg-slate-600' : 'bg-pink-100/70 text-fuchsia-700 hover:bg-pink-200/70'
+                      }`}
                     >
-                      ✕
+                      + ใส่ตะกร้า
                     </button>
                   </div>
-                )}
-              </div>
-
-              <div>
-                <label className="text-[10px] opacity-70 block mb-1">ชื่อสินค้า</label>
-                <input 
-                  type="text" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  placeholder="เช่น หนังสือ แคลคูลัส 1" 
-                  required 
-                  className={`w-full text-xs p-2 rounded-lg border focus:outline-none focus:ring-1 focus:ring-fuchsia-400 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-pink-50/30 border-pink-200'}`}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] opacity-70 block mb-1">ราคา (บาท)</label>
-                  <input 
-                    type="number" 
-                    value={price} 
-                    onChange={(e) => setPrice(e.target.value)} 
-                    placeholder="250" 
-                    required 
-                    className={`w-full text-xs p-2 rounded-lg border focus:outline-none focus:ring-1 focus:ring-fuchsia-400 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-pink-50/30 border-pink-200'}`}
-                  />
                 </div>
-                <div>
-                  <label className="text-[10px] opacity-70 block mb-1">หมวดหมู่</label>
-                  <select 
-                    value={category} 
-                    onChange={(e) => setCategory(e.target.value)}
-                    className={`w-full text-xs p-2 rounded-lg border focus:outline-none focus:ring-1 focus:ring-fuchsia-400 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-pink-50/30 border-pink-200'}`}
-                  >
-                    <option value="ตำราเรียน">ตำราเรียน</option>
-                    <option value="ยูนิฟอร์ม">ยูนิฟอร์ม</option>
-                    <option value="ไอที/อุปกรณ์">ไอที/อุปกรณ์</option>
-                    <option value="ของใช้หอ">ของใช้หอ</option>
-                  </select>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                className="w-full py-2 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 hover:opacity-95 text-white rounded-lg text-xs font-semibold shadow-sm transition-opacity mt-2 cursor-pointer"
-              >
-                ยืนยันการเพิ่มสินค้า
-              </button>
-            </form>
-          )}
-
-          {/* รายการสินค้าที่ลงขาย */}
-          <div className="grid grid-cols-2 gap-3">
-            {!showAddForm && (
-              <div 
-                onClick={() => setShowAddForm(true)}
-                className={`rounded-xl border-2 border-dashed h-52 flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-fuchsia-400 transition-colors ${
-                  isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-pink-300 bg-white/50'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${isDarkMode ? 'bg-slate-700 text-fuchsia-400' : 'bg-pink-100 text-fuchsia-600'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                </div>
-                <p className="text-xs font-semibold">+ เพิ่มสินค้าใหม่</p>
-                <p className="text-[10px] opacity-60 mt-0.5">กดที่นี่เพื่อลงขาย</p>
-              </div>
+              ))
             )}
-
-            {products.map((product) => (
-              <div key={product.id} className={`relative rounded-xl border overflow-hidden shadow-sm flex flex-col justify-between ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-200/80'}`}>
-                <div>
-                  <div className={`h-32 overflow-hidden relative ${isDarkMode ? 'bg-slate-700' : 'bg-pink-50'}`}>
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-3">
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-medium ${isDarkMode ? 'bg-slate-700 text-pink-300' : 'bg-pink-100 text-fuchsia-700'}`}>
-                      {product.category}
-                    </span>
-                    <p className="text-xs font-semibold truncate mt-1.5">{product.name}</p>
-                    <p className="text-sm font-bold text-fuchsia-500 mt-1">฿{product.price}</p>
-                  </div>
-                </div>
-
-                <div className="p-2 pt-0 flex gap-1">
-                  <button 
-                    type="button"
-                    onClick={() => addToCart(product)} 
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
-                      isDarkMode ? 'bg-slate-700 text-pink-300 hover:bg-slate-600' : 'bg-pink-100/70 text-fuchsia-700 hover:bg-pink-200/70'
-                    }`}
-                  >
-                    + ใส่ตะกร้า
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => handleDeleteProduct(product.id)} 
-                    className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors cursor-pointer"
-                    title="ลบสินค้า"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -519,7 +370,7 @@ export default function HomePage() {
                           className="w-32 h-32 mx-auto"
                         />
                       </div>
-                      <p className="text-[10px] opacity-60 mt-2">พร้อมเพย์: 08X-XXX-XXXX (ชื่อบัญชี: ตลาดนัดเด็กวิทยาลัย)</p>
+                      <p className="text-[10px] opacity-60 mt-2">พร้อมเพย์: 08X-XXX-XXXX</p>
 
                       <div className="mt-3 text-left">
                         <label className="text-[10px] opacity-70 block mb-1">แนบหลักฐานการโอน (สลิป):</label>
@@ -533,9 +384,6 @@ export default function HomePage() {
                       <p className="text-[11px] opacity-80">
                         สามารถนัดรับและชำระเงินสดได้ที่ **ใต้อาคารเรียนรวม / โรงอาหารกลาง**
                       </p>
-                      <div className={`p-2.5 rounded-xl text-[10px] border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'}`}>
-                        💡 เมื่อกดยืนยันแล้ว ผู้ขายจะติดต่อกลับทางเบอร์โทรศัพท์เพื่อยืนยันเวลานัดรับสินค้า
-                      </div>
                     </div>
                   )}
                 </div>
